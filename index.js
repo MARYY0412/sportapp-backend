@@ -14,6 +14,7 @@ app.use(express.json());
 //połączenie z bazą danych
 const mongoURL =
   "mongodb+srv://mateusz-ryba:Sluchaj1968%40@cluster0.3rgxt0g.mongodb.net/?retryWrites=true&w=majority";
+
 mongoose
   .connect(mongoURL, {
     useNewUrlParser: true,
@@ -23,74 +24,112 @@ mongoose
   })
   .catch((e) => console.log(e));
 
-let bikeActivities = [];
-let runningActivities = [];
-
 //slash to url
 app.get("/", (req, res) => {
   console.log(req.body);
   res.send("serwer działa");
 });
 
+app.listen(8888, () => {
+  console.log("serwer działa");
+});
+
 //BIKE ACTIVITIES
-//wysyłanie całej listy do aplikacji
-app.get("/bikeActivities", (req, res) => {
+require("./bikeActivities");
+const bikeActivity = mongoose.model("bikeActivities");
+//wysyłanie kolekcji do fronta
+app.get("/bikeActivities", async (req, res) => {
+  const bikeActivities = await bikeActivity.find();
   res.json({ bikeActivities });
 });
 //zapisywanie pojedyńczego elementu z fronta
-app.post("/bikeActivities", (req, res) => {
-  //case 1. Jeżeli id elementu istnieeje w tablicy to check=true, łapiemy też od razu jego index
-  //aby pozniej łatwo podmienić. Case 1 wykonuje się, gdy edytujemy aktywność sportową.
-  let check = false;
-  let itemIndex;
-
-  bikeActivities.forEach((item, index) => {
-    if (item.id === req.body.id) {
-      check = true;
-      itemIndex = index;
+app.post("/bikeActivities", async (req, res) => {
+  const { id, timeOfActivity, dateOfActivity, distanceOfActivity } = req.body;
+  //sprawdzamy czy istnieje element o takim id, jeżeli tak to znaczy że edytujemy jakąś
+  //aktywność i po prostu podmieniamy zawartość aktywności
+  const activity = await bikeActivity.findOne({ id });
+  if (activity) {
+    await bikeActivity.updateOne(
+      { id: id },
+      {
+        $set: {
+          timeOfActivity: String(timeOfActivity),
+          dateOfActivity: String(dateOfActivity),
+          distanceOfActivity: String(distanceOfActivity),
+        },
+      }
+    );
+    //sytuacja, gdy id nie istnieje. To znaczy, że dodajemy nową aktywność.
+  } else {
+    try {
+      await bikeActivity.create({
+        id,
+        timeOfActivity,
+        dateOfActivity,
+        distanceOfActivity,
+      });
+      res.send({ status: "ok" });
+    } catch (error) {
+      res.send({ status: "error" });
     }
-  });
-
-  //cd case 1...Jeżeli check=true to zamieniamy stary element na nowy
-  if (check) bikeActivities[itemIndex] = req.body;
-  //case 2. jezeli danego elementu nie ma jeszcze w tablicy to dodajemy go na koncu
-  //case 2 się wykonuje przy dodaniu elementu do tablicy.
-  else bikeActivities.push(req.body);
-  res.status(200).end();
-  console.log(bikeActivities);
+  }
 });
 //usuwanie pojedyńczego elementu z fronta
-app.delete("/bikeActivities/:Id", (req, res) => {
+app.delete("/bikeActivities/:Id", async (req, res) => {
   const Id = req.params.Id;
-  let array = bikeActivities.filter((item) => {
-    return item.id !== Id;
-  });
-  bikeActivities = array;
+  await bikeActivity.deleteOne({ id: Id });
   res.status(200).end();
 });
 
 //RUNNING ACTIVITIES
+require("./runningActivities");
+const runningActivity = mongoose.model("runningActivities");
 //wysyłanie całej listy do aplikacji
-app.get("/runningActivities", (req, res) => {
+app.get("/runningActivities", async (req, res) => {
+  const runningActivities = await runningActivity.find();
   res.json({ runningActivities });
 });
 //zapisywanie pojedyńczego elementu z fronta
-app.post("/runningActivities", (req, res) => {
-  runningActivities.push(req.body);
+app.post("/runningActivities", async (req, res) => {
+  const { id, timeOfActivity, dateOfActivity, distanceOfActivity } = req.body;
+  //sprawdzamy czy istnieje element o takim id, jeżeli tak to znaczy że edytujemy jakąś
+  //aktywność i po prostu podmieniamy zawartość aktywności
+  const activity = await runningActivity.findOne({ id });
+  if (activity) {
+    await runningActivity.updateOne(
+      { id: id },
+      {
+        $set: {
+          timeOfActivity: String(timeOfActivity),
+          dateOfActivity: String(dateOfActivity),
+          distanceOfActivity: String(distanceOfActivity),
+        },
+      }
+    );
+    //sytuacja, gdy id nie istnieje. To znaczy, że dodajemy nową aktywność.
+  } else {
+    try {
+      await runningActivity.create({
+        id,
+        timeOfActivity,
+        dateOfActivity,
+        distanceOfActivity,
+      });
+      res.send({ status: "ok" });
+    } catch (error) {
+      res.send({ status: "error" });
+    }
+  }
   res.status(200).end();
-  console.log(runningActivities);
 });
 //usuwanie pojedyńczego elementu z fronta
-app.delete("/runningActivities/:Id", (req, res) => {
+app.delete("/runningActivities/:Id", async (req, res) => {
+  console.log(req.body);
   const Id = req.params.Id;
-  let array = runningActivities.filter((item) => {
-    return item.id !== Id;
+  await runningActivity.deleteOne({
+    id: Id,
   });
-  bikeActivities = array;
-  req.status(200).end();
-});
-app.listen(8888, () => {
-  console.log("serwer działa");
+  res.status(200).end();
 });
 
 //OPERACJA NA UŻYTKOWNIKACH
