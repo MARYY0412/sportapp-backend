@@ -14,7 +14,6 @@ app.use(express.json());
 //połączenie z bazą danych
 const mongoURL =
   "mongodb+srv://mateusz-ryba:Sluchaj1968%40@cluster0.3rgxt0g.mongodb.net/?retryWrites=true&w=majority";
-//https://www.youtube.com/watch?v=8zCZqGLHQQ0&list=PLS3Cbnye46mu2DTyFXfOeefex6L8In9zg&index=3
 mongoose
   .connect(mongoURL, {
     useNewUrlParser: true,
