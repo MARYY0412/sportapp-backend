@@ -45,9 +45,14 @@ app.get("/bikeActivities", async (req, res) => {
 //zapisywanie pojedyńczego elementu z fronta
 app.post("/bikeActivities", async (req, res) => {
   const { id, timeOfActivity, dateOfActivity, distanceOfActivity } = req.body;
+
+  //obliczanie średniej szybkości
+  const speed = (distanceOfActivity / 1000 / (timeOfActivity / 60)).toFixed(2);
+
   //sprawdzamy czy istnieje element o takim id, jeżeli tak to znaczy że edytujemy jakąś
   //aktywność i po prostu podmieniamy zawartość aktywności
   const activity = await bikeActivity.findOne({ id });
+
   if (activity) {
     await bikeActivity.updateOne(
       { id: id },
@@ -56,6 +61,7 @@ app.post("/bikeActivities", async (req, res) => {
           timeOfActivity: String(timeOfActivity),
           dateOfActivity: String(dateOfActivity),
           distanceOfActivity: String(distanceOfActivity),
+          speedOfActivity: String(speed),
         },
       }
     );
@@ -67,6 +73,7 @@ app.post("/bikeActivities", async (req, res) => {
         timeOfActivity,
         dateOfActivity,
         distanceOfActivity,
+        speedOfActivity: String(speed),
       });
       res.send({ status: "ok" });
     } catch (error) {
@@ -92,6 +99,10 @@ app.get("/runningActivities", async (req, res) => {
 //zapisywanie pojedyńczego elementu z fronta
 app.post("/runningActivities", async (req, res) => {
   const { id, timeOfActivity, dateOfActivity, distanceOfActivity } = req.body;
+
+  //obliczanie średniej szybkości
+  const speed = (distanceOfActivity / 1000 / (timeOfActivity / 60)).toFixed(2);
+
   //sprawdzamy czy istnieje element o takim id, jeżeli tak to znaczy że edytujemy jakąś
   //aktywność i po prostu podmieniamy zawartość aktywności
   const activity = await runningActivity.findOne({ id });
@@ -103,6 +114,7 @@ app.post("/runningActivities", async (req, res) => {
           timeOfActivity: String(timeOfActivity),
           dateOfActivity: String(dateOfActivity),
           distanceOfActivity: String(distanceOfActivity),
+          speedOfACtivity: String(speed),
         },
       }
     );
@@ -114,6 +126,7 @@ app.post("/runningActivities", async (req, res) => {
         timeOfActivity,
         dateOfActivity,
         distanceOfActivity,
+        speedOfActivity: String(speed),
       });
       res.send({ status: "ok" });
     } catch (error) {
@@ -171,7 +184,7 @@ app.post("/login", async (req, res) => {
     return res.json({ error: "user not exists" });
   }
   if (await bcrypt.compare(password, user.password)) {
-    const token = jwt.sign({}, JWT_SECRET);
+    const token = jwt.sign({ email: user.email }, JWT_SECRET);
     if (res.status(201)) {
       return res.json({ status: "ok", data: token });
     } else {
@@ -182,4 +195,19 @@ app.post("/login", async (req, res) => {
 
   //https://www.youtube.com/watch?v=6oTDAyuQ5iw&list=PLS3Cbnye46mu2DTyFXfOeefex6L8In9zg&index=5
   //skończone tutaj, czas 7:39
+});
+app.post("/userData", async (req, res) => {
+  const { token } = req.body;
+  try {
+    const user = jwt.verify(token, JWT_SECRET);
+    const useremail = user.email;
+    // User.findOne({ email: email }).then((data) => {
+    //   res.send({ status: "ok", data: data });
+    // });
+    User.findOne({ email: useremail }).then((data) => {
+      res.send({ status: "ok", data: data });
+    });
+  } catch (error) {
+    res.send({ status: "error", data: error });
+  }
 });

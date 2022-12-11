@@ -6,6 +6,7 @@ const runningActivitySchema = new mongoose.Schema(
     timeOfActivity: String,
     distanceOfActivity: String,
     dateOfActivity: String,
+    speedOfActivity: String,
   },
   {
     collection: "runningActivities",
